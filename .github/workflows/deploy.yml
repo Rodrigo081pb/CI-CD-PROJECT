@@ -40,6 +40,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+      - name: Instalar npm 9.x
+        run: npm install -g npm@9
+      - name: Limpar cache do npm
+        run: npm cache clean --force
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
@@ -70,6 +74,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+      - name: Instalar npm 9.x
+        run: npm install -g npm@9
+      - name: Limpar cache do npm
+        run: npm cache clean --force
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
