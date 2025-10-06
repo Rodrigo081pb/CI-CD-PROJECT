@@ -1,0 +1,123 @@
+# Workflow de Deploy do CorpX Knowledge Base
+name: Deploy Knowledge Base
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.gitignore'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '.gitignore'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Forçar deploy (emergência)'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: deploy-knowledge-base
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    env:
+      URL_CHECKER_TIMEOUT: ${{ vars.URL_CHECKER_TIMEOUT }}
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Instalar dependências
+        run: npm ci
+      - name: Rodar linters
+        run: npm run lint:all
+      - name: Rodar scripts em script/**
+        run: |
+          for file in script/*.js; do
+            node "$file" -t ${{ env.URL_CHECKER_TIMEOUT }};
+          done
+
+  build:
+    name: Build
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Instalar dependências
+        run: npm ci
+      - name: Definir PATH_PREFIX
+        run: |
+          echo "PATH_PREFIX=/${GITHUB_REPOSITORY#*/}/" >> $GITHUB_ENV
+      - name: Build produção
+        run: npm run prod
+      - name: Upload artefato do site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+      issues: write
+    steps:
+      - name: Download artefato do site
+        uses: actions/download-pages-artifact@v3
+      - name: Deploy para GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Instalar GitHub CLI
+        run: |
+          sudo apt-get install gh
+      - name: Criar issue de status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STATUS: ${{ job.status }}
+          TODAY: ${{ github.event.head_commit.timestamp || github.event.pull_request.updated_at || github.event.workflow_dispatch.created_at || github.run_started_at }}
+          KB_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          gh auth login --with-token < <(echo "$GITHUB_TOKEN")
+          gh issue create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "${TODAY%%T*} - Deployment: ${STATUS^}" \
+            --body "URL: $KB_URL"
