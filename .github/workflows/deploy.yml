@@ -55,11 +55,9 @@ jobs:
         run: npm ci
       - name: Rodar linters
         run: npm run lint:all
-      - name: Rodar scripts em script/**
+      - name: Rodar url-checker.js
         run: |
-          for file in script/*.js; do
-            node "$file" -t ${{ env.URL_CHECKER_TIMEOUT }};
-          done
+          node script/url-checker.js -t ${{ env.URL_CHECKER_TIMEOUT || 5 }} -d src/posts
 
   build:
     name: Build
