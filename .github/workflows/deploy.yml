@@ -40,8 +40,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-        with:
-          node-version: '18'
       - name: Instalar npm 9.x
         run: npm install -g npm@9
       - name: Limpar cache do npm
