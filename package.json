@@ -6,6 +6,10 @@
     "marked": "^16.4.0"
   },
   "scripts": {
-    "lint:all": "echo 'Nenhum lint configurado.'"
+    "lint:all": "echo 'Nenhum lint configurado.'",
+    "prod": "npm-run-all delete:dist eleventy:prod sass:prod",
+    "delete:dist": "del-cli --force _site",
+    "eleventy:prod": "npx eleventy --output=_site",
+    "sass:prod": "echo 'SASS build aqui'"
   }
 }
