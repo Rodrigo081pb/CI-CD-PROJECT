@@ -1,4 +1,59 @@
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    env:
+      URL_CHECKER_TIMEOUT: ${{ vars.URL_CHECKER_TIMEOUT }}
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Instalar npm 9.x
+        run: npm install -g npm@9
+      - name: Limpar cache do npm
+        run: npm cache clean --force
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Instalar dependências
+        run: npm ci
+      - name: Rodar linters
+        run: npm run lint:all
+      - name: Rodar url-checker.js
+        run: |
+          node script/url-checker.js -t ${{ env.URL_CHECKER_TIMEOUT || 5 }} -d src/posts
 
+  build:
+    name: Build
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Instalar npm 9.x
+        run: npm install -g npm@9
+      - name: Limpar cache do npm
+        run: npm cache clean --force
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Instalar dependências
+        run: npm ci
       - name: Definir PATH_PREFIX
         run: |
           echo "PATH_PREFIX=/${GITHUB_REPOSITORY#*/}/" >> $GITHUB_ENV
@@ -12,6 +67,26 @@
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./_site
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+      issues: write
+    steps:
+      - name: Baixar artefato do site
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: ./_site
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v4
       - name: Deploy para GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
@@ -29,30 +104,34 @@
             --repo "$GITHUB_REPOSITORY" \
             --title "${TODAY%%T*} - Deployment: ${STATUS^}" \
             --body "URL: $KB_URL"
-name: Deploy Knowledge Base
 
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - '.gitignore'
-      - 'README.md'
-      - 'CONTRIBUTING.md'
-      - 'LICENSE'
-  pull_request:
-    branches: [main]
-    paths-ignore:
-      - '.gitignore'
-      - 'README.md'
-      - 'CONTRIBUTING.md'
-      - 'LICENSE'
-  workflow_dispatch:
-    inputs:
-      force_deploy:
-        description: 'Forçar deploy (emergência)'
-        required: false
-        default: 'false'
 
-concurrency:
-  group: deploy-knowledge-base
-  cancel-in-progress: true
+      name: Deploy Knowledge Base
+      on:
+        push:
+          branches: [main]
+          paths-ignore:
+            - '.gitignore'
+            - 'README.md'
+            - 'CONTRIBUTING.md'
+            - 'LICENSE'
+        pull_request:
+          branches: [main]
+          paths-ignore:
+            - '.gitignore'
+            - 'README.md'
+            - 'CONTRIBUTING.md'
+            - 'LICENSE'
+        workflow_dispatch:
+          inputs:
+            force_deploy:
+              description: 'Forçar deploy (emergência)'
+              required: false
+              default: 'false'
+
+      concurrency:
+        group: deploy-knowledge-base
+        cancel-in-progress: true
+      jobs:
+        # Adicione aqui os jobs test, build e deploy conforme o modelo anterior
