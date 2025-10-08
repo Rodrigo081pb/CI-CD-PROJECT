@@ -119,7 +119,6 @@ jobs:
           TODAY: ${{ github.event.head_commit.timestamp || github.event.pull_request.updated_at || github.event.workflow_dispatch.created_at || github.run_started_at }}
           KB_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
-          gh auth login --with-token < <(echo "$GITHUB_TOKEN")
           gh issue create \
             --repo "$GITHUB_REPOSITORY" \
             --title "${TODAY%%T*} - Deployment: ${STATUS^}" \
