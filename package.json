@@ -1,7 +1,8 @@
 {
   "dependencies": {
     "axios": "^1.12.2",
-    "eleventy-plugin-toc": "^1.0.0"
+    "eleventy-plugin-toc": "^1.0.0",
+    "marked": "^16.4.0"
   },
   "scripts": {
     "lint:all": "echo 'Nenhum lint configurado.'"
