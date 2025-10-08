@@ -113,6 +113,10 @@ jobs:
         with:
           name: github-pages
           path: ./_site
+      - name: Verificar symlinks em _site
+        run: find ./_site -type l
+      - name: Listar arquivos grandes em _site
+        run: find ./_site -type f -size +100M
       - name: Deploy para GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
