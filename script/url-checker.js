@@ -40,7 +40,12 @@
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const marked = require('marked');
+let marked;
+async function loadMarked() {
+    if (!marked) {
+        marked = (await import('marked')).marked;
+    }
+}
 const { ArgumentParser } = require('argparse');
 const { exit } = require('process');
 
@@ -69,9 +74,10 @@ const walkSync = (dir, filelist = []) => {
 }
 
 // Read a list of file paths, parse the markdown and return all the URLs
-const getUrls = (filePaths) => {
+const getUrls = async (filePaths) => {
     let urls = [];
-    filePaths.forEach(filePath => {
+    await loadMarked();
+    for (const filePath of filePaths) {
         const markdown = fs.readFileSync(filePath, { encoding: 'utf-8' });
         const tokens = marked.lexer(markdown);
         // Recursively go through the tokens to find all the links
@@ -84,7 +90,7 @@ const getUrls = (filePaths) => {
             }
         }
         tokens.forEach(findLinks);
-    });
+    }
     return urls;
 }
 
@@ -102,7 +108,12 @@ const checkUrl = async (url) => {
 }
 
 // Run
-const filePaths = walkSync(postsDir);
-const urls = getUrls(filePaths);
-urls.forEach(url => checkUrl(url));
-console.log('All URLs are valid');
+async function main() {
+    const filePaths = walkSync(postsDir);
+    const urls = await getUrls(filePaths);
+    for (const url of urls) {
+        await checkUrl(url);
+    }
+    console.log('All URLs are valid');
+}
+main();
