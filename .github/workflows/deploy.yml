@@ -104,6 +104,3 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --title "${TODAY%%T*} - Deployment: ${STATUS^}" \
             --body "URL: $KB_URL"
-
-on:
-
