@@ -7,7 +7,7 @@ const htmlMinTransform = require('./src/transforms/html-min-transform.js');
 const isProduction = process.env.NODE_ENV === 'production';
 const markdownIt = require('markdown-it');
 const markdownItAnchor = require('markdown-it-anchor');
-const pluginTOC = require('eleventy-plugin-toc');
+// const pluginTOC = require('eleventy-plugin-toc');
 const syntaxHighlight = require('@11ty/eleventy-plugin-syntaxhighlight');
 const w3DateFilter = require('./src/filters/w3-date-filter.js');
 const parentFilter = require('./src/filters/parent-filter.js');
@@ -26,7 +26,7 @@ module.exports = config => {
 
   config.addPlugin(eleventyNavigationPlugin);
   config.addPlugin(syntaxHighlight);
-  config.addPlugin(pluginTOC);
+  // config.addPlugin(pluginTOC);
   config.addPlugin(EleventyHtmlBasePlugin);
 
   config.addPassthroughCopy({ './src/robots.txt': '/robots.txt' });
