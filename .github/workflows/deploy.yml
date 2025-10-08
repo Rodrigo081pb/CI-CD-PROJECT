@@ -29,3 +29,30 @@
             --repo "$GITHUB_REPOSITORY" \
             --title "${TODAY%%T*} - Deployment: ${STATUS^}" \
             --body "URL: $KB_URL"
+name: Deploy Knowledge Base
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.gitignore'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '.gitignore'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Forçar deploy (emergência)'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: deploy-knowledge-base
+  cancel-in-progress: true
