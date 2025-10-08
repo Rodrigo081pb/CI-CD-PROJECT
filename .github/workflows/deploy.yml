@@ -102,11 +102,13 @@ jobs:
         run: find ./_site -type l
       - name: Listar arquivos grandes em _site
         run: find ./_site -type f -size +100M
+      - name: Upload artefato do site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
       - name: Deploy para GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          folder: ./_site
       - name: Instalar GitHub CLI
         run: |
           sudo apt-get install gh
