@@ -59,10 +59,18 @@ jobs:
         run: |
           node script/url-checker.js -t ${{ env.URL_CHECKER_TIMEOUT || 5 }} -d src/posts
 
-  build:
-    name: Build
+
+  build-and-deploy:
+    name: Build and Deploy
     needs: test
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+      issues: write
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
@@ -90,29 +98,6 @@ jobs:
           echo "PATH_PREFIX=/${GITHUB_REPOSITORY#*/}/" >> $GITHUB_ENV
       - name: Build produção
         run: npm run prod
-      - name: Upload artefato do site
-        uses: actions/upload-artifact@v4
-        with:
-          name: github-pages
-          path: ./_site
-
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    permissions:
-      pages: write
-      id-token: write
-      issues: write
-    steps:
-      - name: Download artefato do site
-        uses: actions/download-artifact@v4
-        with:
-          name: github-pages
-          path: ./_site
       - name: Verificar symlinks em _site
         run: find ./_site -type l
       - name: Listar arquivos grandes em _site
@@ -120,6 +105,8 @@ jobs:
       - name: Deploy para GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          folder: ./_site
       - name: Instalar GitHub CLI
         run: |
           sudo apt-get install gh
