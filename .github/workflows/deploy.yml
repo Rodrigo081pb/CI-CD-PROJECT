@@ -91,8 +91,9 @@ jobs:
       - name: Build produção
         run: npm run prod
       - name: Upload artefato do site
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
+          name: github-pages
           path: ./_site
 
   deploy:
@@ -108,7 +109,10 @@ jobs:
       issues: write
     steps:
       - name: Download artefato do site
-        uses: actions/download-pages-artifact@v3
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: ./_site
       - name: Deploy para GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
